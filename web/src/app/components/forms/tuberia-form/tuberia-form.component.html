@@ -1,0 +1,83 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  
+  <mat-form-field appearance="outline">
+    <mat-label>Operación</mat-label>
+    <mat-select formControlName="operacion">
+      <mat-option value="select">Consultar un ID</mat-option>
+      <mat-option value="selectAll">Seleccionar Todas</mat-option>
+      <mat-option value="insert">Insertar</mat-option>
+      <mat-option value="update">Actualizar</mat-option>
+      <mat-option value="delete">Eliminar</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div *ngIf="form.value.operacion !== 'insert' && form.value.operacion !== 'selectAll'" style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+    <mat-form-field appearance="outline" style="margin-bottom: -1.25em;">
+      <mat-label>ID de la Tubería</mat-label>
+      <input matInput formControlName="id" type="number">
+    </mat-form-field>
+
+    <button *ngIf="form.value.operacion === 'update'" type="button" mat-stroked-button color="accent" (click)="cargarRegistro()">
+      Cargar Datos
+    </button>
+  </div>
+
+  <div *ngIf="form.value.operacion === 'insert' || form.value.operacion === 'update'">
+    <mat-form-field appearance="outline">
+      <mat-label>Geometría (LINESTRING)</mat-label>
+      <input matInput formControlName="geom" placeholder="LINESTRING(0 0, 10 10)">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Tamaño Tubo (mm)</mat-label>
+      <input matInput formControlName="tamano_tubo" type="number">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Material</mat-label>
+      <input matInput formControlName="material">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Presión Máxima</mat-label>
+      <input matInput formControlName="presion_maxima" type="number">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha de Instalación</mat-label>
+      <input matInput formControlName="fecha_instalacion" type="date">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Estado</mat-label>
+      <input matInput formControlName="estado">
+    </mat-form-field>
+  </div>
+
+  <button mat-raised-button color="primary" type="submit">
+    Ejecutar {{ form.value.operacion | uppercase }}
+  </button>
+</form>
+ 
+<div *ngIf="mensajeError" style="margin-top: 20px; padding: 15px; background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; border-radius: 8px;">
+  <strong>⚠️ Error:</strong> {{ mensajeError }}
+</div>
+
+<div *ngIf="mensajeExito" style="margin-top: 20px; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; border-radius: 8px;">
+  <strong>✔️ Éxito:</strong> {{ mensajeExito }}
+</div>
+
+<div *ngIf="form.value.operacion === 'select' && registroSeleccionado" style="margin-top: 20px; padding: 10px; background: #e8f5e9; border-radius: 8px;">
+  <h3>Detalles de la Tubería ID: {{ registroSeleccionado.id }}</h3>
+  <pre style="background: white; padding: 10px; border: 1px solid #ccc; overflow-x: auto;">{{ registroSeleccionado | json }}</pre>
+</div>
+
+<div *ngIf="form.value.operacion === 'selectAll' && listaRegistros.length > 0" style="margin-top: 20px; padding: 10px; background: #e0f7fa; border-radius: 8px;">
+  <h3>Tuberías en la Base de Datos:</h3>
+  <ul>
+    <li *ngFor="let item of listaRegistros" style="margin-bottom: 10px;">
+      <strong>ID: {{ item.id }}</strong> - Material: {{ item.material }} ({{item.tamano_tubo}}mm)
+      <pre style="background: white; padding: 5px; border: 1px solid #ccc; overflow-x: auto;">{{ item | json }}</pre>
+    </li>
+  </ul>
+</div>
