@@ -6,7 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { ArquetaPozoService } from '@app/services/arqueta-pozo.service';
-import { ActivatedRoute } from '@angular/router'; // <-- IMPORTADO AQUÍ
 
 @Component({
   selector: 'app-arqueta-pozo-form',
@@ -24,15 +23,9 @@ export class ArquetaPozoFormComponent implements OnInit {
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  // <-- Inyectado 'route' en el constructor
-  constructor(
-    private fb: FormBuilder, 
-    private service: ArquetaPozoService,
-    private route: ActivatedRoute
-  ) {}
+  constructor(private fb: FormBuilder, private service: ArquetaPozoService) {}
 
   ngOnInit(): void {
-    // 1. Inicializar formulario
     this.form = this.fb.group({
       operacion: ['insert'],
       id: [''],
@@ -43,45 +36,16 @@ export class ArquetaPozoFormComponent implements OnInit {
       accesible: [true],
       estado_conservacion: ['Excelente']
     });
-
-    // 2. Suscribirse a los parámetros de la URL <-- NUEVO
-    this.route.queryParams.subscribe(params => {
-      if (params['geom']) {
-        this.form.patchValue({
-          geom: params['geom'],
-          operacion: 'insert' // Forzamos 'insert' cuando venimos del mapa
-        });
-      }
-    });
   }
 
   // Función para extraer el error exacto de Django
   procesarError(err: any) {
     console.error('❌ Error completo:', err);
-    
-    if (err.error) {
-      if (typeof err.error === 'string') {
-        this.mensajeError = err.error;
-      } else {
-        // Función recursiva que bucea en el objeto buscando los textos
-        let mensajes: string[] = [];
-        const extraerTextos = (obj: any) => {
-          if (typeof obj === 'string') {
-            mensajes.push(obj);
-          } else if (Array.isArray(obj)) {
-            obj.forEach(extraerTextos);
-          } else if (typeof obj === 'object' && obj !== null) {
-            Object.values(obj).forEach(extraerTextos);
-          }
-        };
-        
-        extraerTextos(err.error);
-        
-        // Si logró sacar textos los une, si no, lo pasa a texto bruto
-        this.mensajeError = mensajes.length > 0 
-          ? mensajes.join(' | ') 
-          : JSON.stringify(err.error);
-      }
+    if (err.error && typeof err.error === 'object') {
+      const mensajes = Object.values(err.error).flat();
+      this.mensajeError = mensajes.join(' | ');
+    } else if (err.error && typeof err.error === 'string') {
+      this.mensajeError = err.error;
     } else {
       this.mensajeError = err.message || 'Error desconocido del servidor.';
     }

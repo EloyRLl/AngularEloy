@@ -1,7 +1,30 @@
-<app-menu></app-menu>
-<app-header></app-header>
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="over" class="sidenav">
+    <div style="padding: 15px;">
+      <button mat-icon-button (click)="sidenav.close()"><mat-icon>close</mat-icon></button>
+      <nav style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+        <a routerLink="/home" (click)="sidenav.close()">🏠 Home</a>
+        <a routerLink="/map" (click)="sidenav.close()">🗺️ Mapa</a>
+        <a routerLink="/zonas-servicio" (click)="sidenav.close()">⬟ Zonas Servicio</a>
+        <a routerLink="/tuberias" (click)="sidenav.close()">〰️ Tuberías</a>
+        <a routerLink="/arquetas-pozos" (click)="sidenav.close()">📍 Arquetas</a>
+        <a routerLink="/help" (click)="sidenav.close()">ℹ️ Ayuda</a>
+      </nav>
+    </div>
+  </mat-sidenav>
 
-<router-outlet></router-outlet>
+  <mat-sidenav-content>
+    <div class="header-wrapper">
+      <button mat-icon-button (click)="toggleSidenav()" class="hamburger-btn">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <app-header style="flex: 1;"></app-header>
+    </div>
+    
+    <app-navbar></app-navbar>
 
-<app-footer></app-footer>
-
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

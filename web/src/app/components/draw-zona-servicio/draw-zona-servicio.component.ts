@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MapService } from '../../services/map.service';
+import { AuthService } from '../../services/auth.service'; // Inyectamos AuthService
 import { Router } from '@angular/router';
 import Draw from 'ol/interaction/Draw';
 import WKT from 'ol/format/WKT';
@@ -12,7 +13,7 @@ import VectorSource from 'ol/source/Vector';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <button *ngIf="isUserLoggedIn" (click)="toggleDraw()" [ngClass]="{'active': isDrawing}" style="margin-bottom: 5px; cursor: pointer;">
+    <button *ngIf="authService.isAuthenticated" (click)="toggleDraw()" [ngClass]="{'active': isDrawing}" style="margin-bottom: 5px; cursor: pointer;">
       {{ isDrawing ? '🛑 Parar Zona' : '⬟ Dibujar Zona' }}
     </button>
   `,
@@ -24,15 +25,14 @@ import VectorSource from 'ol/source/Vector';
 export class DrawZonaServicioComponent implements OnInit, OnDestroy {
   drawInteraction!: Draw;
   isDrawing: boolean = false;
-  isUserLoggedIn: boolean = false; 
 
-  constructor(private mapService: MapService, private router: Router) {}
+  constructor(
+    private mapService: MapService, 
+    private router: Router,
+    public authService: AuthService
+  ) {}
 
   ngOnInit() {
-    const token = localStorage.getItem('token');
-    this.isUserLoggedIn = !!token && token !== 'undefined' && token !== 'null';
-
-    // ⚠️ ATENCIÓN AQUÍ: Si no te funciona, el error está en este texto
     const tituloCapa = 'Zonas Servicio vector'; 
     const layer = this.mapService.getLayerByTitle(tituloCapa) as VectorLayer<VectorSource>;
     
@@ -43,19 +43,20 @@ export class DrawZonaServicioComponent implements OnInit, OnDestroy {
 
     this.drawInteraction = new Draw({
       source: layer.getSource()!,
-      type: 'Polygon' // Zonas son polígonos
+      type: 'Polygon'
     });
 
     this.drawInteraction.on('drawend', (event) => {
       const format = new WKT();
       const geomWkt = format.writeGeometry(event.feature.getGeometry()!);
       this.toggleDraw(); 
+      // Redirige a la ruta definida en tu app.routes.ts
       this.router.navigate(['/zonas-servicio'], { queryParams: { geom: geomWkt } });
     });
   }
 
   toggleDraw() {
-    if (!this.isUserLoggedIn) return;
+    if (!this.authService.isAuthenticated) return;
 
     this.isDrawing = !this.isDrawing;
     if (this.isDrawing) {

@@ -1,0 +1,40 @@
+/* Asegurar que el contenedor ocupe toda la pantalla */
+.sidenav-container {
+  height: 100vh;
+  width: 100%;
+}
+
+.sidenav {
+  width: 250px;
+  background: #fff;
+}
+
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 5px 10px;
+}
+
+.hamburger-btn {
+  display: none; // Oculto en escritorio
+}
+
+@media (max-width: 800px) {
+  .hamburger-btn {
+    display: block; // Visible en móvil
+  }
+}
+
+.page-content {
+  padding: 15px;
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Forzar que el navbar no se desplace */
+app-navbar {
+  display: block;
+  width: 100%;
+}

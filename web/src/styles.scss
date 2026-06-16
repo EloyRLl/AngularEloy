@@ -10,6 +10,28 @@ input, textarea, .mat-mdc-form-field {
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+/* Asegurar que el contenedor principal sea el máximo posible */
+.sidenav-container {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* Evita scrolls innecesarios */
+}
+
+/* El contenido del sidenav debe dejar espacio para el header */
+.mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.page-content {
+  flex: 1; /* El main se expande para llenar el hueco */
+  position: relative;
+  overflow: hidden;
+}
+
+
+
 .flexbox-exterior-container {
     width: 100%;
     display: flex;

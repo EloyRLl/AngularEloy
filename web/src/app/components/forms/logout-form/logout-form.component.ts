@@ -1,14 +1,7 @@
 import { Component } from '@angular/core';
-//To use forms 
-//  Import in the imports on the component the following
-
 import { MatButtonModule } from '@angular/material/button';
-
-//To use the controls in the component
-//  Import in the imports on the component the following
-import { ServerAnswerModel } from '../../../models/server-answer.model';
-import { ApiService } from '../../../services/api.service';
 import { AuthService } from '../../../services/auth.service';
+import { Router } from '@angular/router'; // Añadimos el Router por si quieres redirigir
 
 @Component({
   selector: 'app-logout-form',
@@ -19,21 +12,21 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class LogoutFormComponent {
   serverMessage = '';
-  constructor(private apiService:ApiService, private authService: AuthService){}
+  
+  // Inyectamos el AuthService y el Router
+  constructor(
+    private authService: AuthService, 
+    private router: Router
+  ){}
+  
   logout(){
-    this.apiService.post('core/logout/', {}).subscribe({
-          next: (response: ServerAnswerModel) => {
-            if (response.ok){
-              this.authService.username = '';
-              this.authService.isAuthenticated = false;
-            }
-            this.serverMessage=response.message;
-          },
-          error: (error:any)=>{
-            console.log(error.description)
-            this
-          }
-        })//subscribe
+    // Llamamos al método que ya tienes en auth.service.ts
+    // Ese método ya borra el token, cambia isAuthenticated a false y avisa a Django
+    this.authService.logout();
+    
+    this.serverMessage = "Sesión cerrada correctamente.";
+    
+    // Opcionalmente, te redirige a la página principal o al login después de salir
+    this.router.navigate(['/']); 
   }
-
 }

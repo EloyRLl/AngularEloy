@@ -6,7 +6,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { TuberiaService } from '@app/services/tuberia.service'; 
-import { ActivatedRoute } from '@angular/router'; // <-- IMPORTADO AQUÍ
 
 @Component({
   selector: 'app-tuberia-form',
@@ -20,19 +19,13 @@ export class TuberiaFormComponent implements OnInit {
   listaRegistros: any[] = []; 
   registroSeleccionado: any = null;
 
-  // Variables para los mensajes en pantalla
+  // ✨ NUEVAS VARIABLES PARA LOS MENSAJES EN PANTALLA
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  // <-- Inyectado 'route' en el constructor
-  constructor(
-    private fb: FormBuilder, 
-    private service: TuberiaService,
-    private route: ActivatedRoute
-  ) {}
+  constructor(private fb: FormBuilder, private service: TuberiaService) {}
 
   ngOnInit(): void {
-    // 1. Inicializar formulario
     this.form = this.fb.group({
       operacion: ['insert'],
       id: [''],
@@ -43,45 +36,18 @@ export class TuberiaFormComponent implements OnInit {
       fecha_instalacion: ['2023-01-15'],
       estado: ['Bueno']
     });
-
-    // 2. Suscribirse a los parámetros de la URL <-- NUEVO
-    this.route.queryParams.subscribe(params => {
-      if (params['geom']) {
-        this.form.patchValue({
-          geom: params['geom'],
-          operacion: 'insert' // Forzamos 'insert' cuando venimos del mapa
-        });
-      }
-    });
   }
 
-  // Función para extraer el error exacto que envía Django
+  // ✨ NUEVA FUNCIÓN: Extrae el error exacto que envía Django
   procesarError(err: any) {
     console.error('❌ Error completo:', err);
-    
-    if (err.error) {
-      if (typeof err.error === 'string') {
-        this.mensajeError = err.error;
-      } else {
-        // Función recursiva que bucea en el objeto buscando los textos
-        let mensajes: string[] = [];
-        const extraerTextos = (obj: any) => {
-          if (typeof obj === 'string') {
-            mensajes.push(obj);
-          } else if (Array.isArray(obj)) {
-            obj.forEach(extraerTextos);
-          } else if (typeof obj === 'object' && obj !== null) {
-            Object.values(obj).forEach(extraerTextos);
-          }
-        };
-        
-        extraerTextos(err.error);
-        
-        // Si logró sacar textos los une, si no, lo pasa a texto bruto
-        this.mensajeError = mensajes.length > 0 
-          ? mensajes.join(' | ') 
-          : JSON.stringify(err.error);
-      }
+    if (err.error && typeof err.error === 'object') {
+      // Django suele mandar {"geom": ["Error espacial"], "otro": ["..."]}
+      // Esto junta todos los mensajes en un solo texto legible
+      const mensajes = Object.values(err.error).flat();
+      this.mensajeError = mensajes.join(' | ');
+    } else if (err.error && typeof err.error === 'string') {
+      this.mensajeError = err.error;
     } else {
       this.mensajeError = err.message || 'Error desconocido del servidor.';
     }
@@ -118,7 +84,7 @@ export class TuberiaFormComponent implements OnInit {
       case 'insert':
         this.service.create(payload).subscribe({
           next: (res: any) => this.mensajeExito = '✅ Tubería creada con éxito.',
-          error: (err: any) => this.procesarError(err)
+          error: (err: any) => this.procesarError(err) // Usamos la nueva función
         });
         break;
       case 'update':
