@@ -1,6 +1,15 @@
+<div style="margin-bottom: 15px;">
+  <div *ngIf="mensajeExito" style="color: #155724; font-weight: bold; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 10px;">
+    {{ mensajeExito }}
+  </div>
+  <div *ngIf="mensajeError" style="color: #721c24; font-weight: bold; padding: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 10px;">
+    {{ mensajeError }}
+  </div>
+</div>
+
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
   
-  <mat-form-field appearance="outline">
+  <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 10px;">
     <mat-label>Operación</mat-label>
     <mat-select formControlName="operacion">
       <mat-option value="select">Consultar un ID</mat-option>
@@ -11,12 +20,18 @@
     </mat-select>
   </mat-form-field>
 
-  <mat-form-field appearance="outline" *ngIf="form.value.operacion !== 'insert' && form.value.operacion !== 'selectAll'">
-    <mat-label>ID de la Tubería</mat-label>
-    <input matInput formControlName="id" type="number">
-  </mat-form-field>
+  <div style="display: flex; gap: 10px; align-items: center;" *ngIf="form.value.operacion !== 'insert' && form.value.operacion !== 'selectAll'">
+    <mat-form-field appearance="outline" style="flex: 1;">
+      <mat-label>ID de la Tubería</mat-label>
+      <input matInput formControlName="id" type="number">
+    </mat-form-field>
+    
+    <button type="button" mat-stroked-button color="primary" *ngIf="form.value.operacion === 'update'" (click)="cargarRegistro()" style="margin-bottom: 20px;">
+      Cargar Datos Actuales
+    </button>
+  </div>
 
-  <div *ngIf="form.value.operacion === 'insert' || form.value.operacion === 'update'">
+  <div *ngIf="form.value.operacion === 'insert' || form.value.operacion === 'update'" style="display: flex; flex-direction: column; gap: 5px;">
     <mat-form-field appearance="outline">
       <mat-label>Geometría (LINESTRING)</mat-label>
       <input matInput formControlName="geom" placeholder="LINESTRING(0 0, 10 10)">
@@ -28,9 +43,13 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Material</mat-label>
-      <input matInput formControlName="material">
-    </mat-form-field>
+  <mat-label>Material</mat-label>
+  <mat-select formControlName="material">
+    <mat-option *ngFor="let m of materiales" [value]="m.id">
+      {{ m.nombre }}
+    </mat-option>
+  </mat-select>
+</mat-form-field>
 
     <mat-form-field appearance="outline">
       <mat-label>Presión Máxima</mat-label>
@@ -48,17 +67,22 @@
     </mat-form-field>
   </div>
 
-  <button mat-raised-button color="primary" type="submit">
+  <button mat-raised-button color="primary" type="submit" style="width: 100%; padding: 10px; font-size: 16px;">
     Ejecutar {{ form.value.operacion | uppercase }}
   </button>
 </form>
 
-<div *ngIf="form.value.operacion === 'selectAll' && listaRegistros.length > 0" style="margin-top: 20px; padding: 10px; background: #e0f7fa; border-radius: 8px;">
+<div *ngIf="form.value.operacion === 'selectAll' && listaRegistros.length > 0" style="margin-top: 20px; padding: 15px; background: #e0f7fa; border-radius: 8px;">
   <h3>Tuberías en la Base de Datos:</h3>
-  <ul>
-    <li *ngFor="let item of listaRegistros" style="margin-bottom: 10px;">
-      <strong>ID: {{ item.id }}</strong> - Material: {{ item.material }} ({{item.tamano_tubo}}mm)
-      <pre style="background: white; padding: 5px; border: 1px solid #ccc;">{{ item | json }}</pre>
+  <ul style="list-style: none; padding-left: 0;">
+    <li *ngFor="let item of listaRegistros" style="margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+      <strong>ID: {{ item.id }}</strong> - Material ID: {{ item.material }} ({{item.tamano_tubo}}mm)
+      <pre style="background: white; padding: 10px; border: 1px solid #999; border-radius: 4px; overflow-x: auto;">{{ item | json }}</pre>
     </li>
   </ul>
+</div>
+
+<div *ngIf="form.value.operacion === 'select' && registroSeleccionado" style="margin-top: 20px; padding: 15px; background: #fff3e0; border-radius: 8px;">
+  <h3>Detalles de la Tubería:</h3>
+  <pre style="background: white; padding: 10px; border: 1px solid #999; border-radius: 4px; overflow-x: auto;">{{ registroSeleccionado | json }}</pre>
 </div>

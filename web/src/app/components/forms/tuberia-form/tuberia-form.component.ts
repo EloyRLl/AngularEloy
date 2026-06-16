@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { ActivatedRoute } from '@angular/router'; // ✨ Para las coordenadas del mapa
 import { TuberiaService } from '@app/services/tuberia.service'; 
 
 @Component({
@@ -19,33 +20,70 @@ export class TuberiaFormComponent implements OnInit {
   listaRegistros: any[] = []; 
   registroSeleccionado: any = null;
 
-  // ✨ NUEVAS VARIABLES PARA LOS MENSAJES EN PANTALLA
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  constructor(private fb: FormBuilder, private service: TuberiaService) {}
+  constructor(
+    private fb: FormBuilder, 
+    private service: TuberiaService,
+    private route: ActivatedRoute
+  ) {}
+
+  materiales: any[] = []; // ✨ Lista para el desplegable
 
   ngOnInit(): void {
     this.form = this.fb.group({
       operacion: ['insert'],
       id: [''],
-      geom: ['LINESTRING(0 0, 10 10)'],
+      geom: [''],
       tamano_tubo: [250],
-      material: ['PVC'],
+      material: [''], // Lo dejamos vacío
       presion_maxima: [10.5],
       fecha_instalacion: ['2023-01-15'],
       estado: ['Bueno']
     });
+
+    // ✨ CARGAMOS LOS MATERIALES AL INICIAR
+    this.codelistService.getMaterialesTuberia().subscribe({
+      next: (data: any) => {
+        this.materiales = data.results ? data.results : data;
+      },
+      error: (err) => console.error('Error cargando materiales', err)
+    });
+
+    // Detectar si venimos del mapa y rellenar coordenadas
+    this.route.queryParams.subscribe(params => {
+      if (params['geom']) {
+        this.form.patchValue({
+          geom: params['geom'],
+          operacion: 'insert'
+        });
+        this.mensajeExito = '📍 Coordenadas capturadas del mapa listas para insertar.';
+      }
+    });
   }
 
-  // ✨ NUEVA FUNCIÓN: Extrae el error exacto que envía Django
   procesarError(err: any) {
     console.error('❌ Error completo:', err);
+    
     if (err.error && typeof err.error === 'object') {
-      // Django suele mandar {"geom": ["Error espacial"], "otro": ["..."]}
-      // Esto junta todos los mensajes en un solo texto legible
-      const mensajes = Object.values(err.error).flat();
+      let mensajes: string[] = [];
+      
+      // Recorremos las claves del error que envía Django
+      for (const key in err.error) {
+        if (Array.isArray(err.error[key])) {
+          // Si es un array de errores para un campo concreto
+          mensajes.push(`[${key.toUpperCase()}]: ${err.error[key].join(', ')}`);
+        } else if (typeof err.error[key] === 'string') {
+          // Si es un texto directo (ej: "detail": "No autenticado")
+          mensajes.push(err.error[key]);
+        } else {
+          // Si es otro objeto más profundo, lo convertimos a texto real para que no ponga [object Object]
+          mensajes.push(`[${key.toUpperCase()}]: ${JSON.stringify(err.error[key])}`);
+        }
+      }
       this.mensajeError = mensajes.join(' | ');
+      
     } else if (err.error && typeof err.error === 'string') {
       this.mensajeError = err.error;
     } else {
@@ -65,7 +103,8 @@ export class TuberiaFormComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (data: any) => {
         this.form.patchValue(data);
-        this.mensajeExito = '✅ Datos cargados correctamente.';
+        this.form.patchValue({ operacion: 'update' });
+        this.mensajeExito = '✅ Datos cargados correctamente listos para editar.';
       },
       error: (err: any) => this.procesarError(err)
     });
@@ -74,7 +113,6 @@ export class TuberiaFormComponent implements OnInit {
   onSubmit() {
     const { operacion, id, ...payload } = this.form.value;
 
-    // Limpiamos la pantalla visual al ejecutar una nueva acción
     this.registroSeleccionado = null;
     this.listaRegistros = [];
     this.mensajeError = '';
@@ -84,7 +122,7 @@ export class TuberiaFormComponent implements OnInit {
       case 'insert':
         this.service.create(payload).subscribe({
           next: (res: any) => this.mensajeExito = '✅ Tubería creada con éxito.',
-          error: (err: any) => this.procesarError(err) // Usamos la nueva función
+          error: (err: any) => this.procesarError(err) 
         });
         break;
       case 'update':
@@ -111,8 +149,20 @@ export class TuberiaFormComponent implements OnInit {
       case 'selectAll':
         this.service.getAll().subscribe({
           next: (data: any) => {
-            this.listaRegistros = data.results ? data.results : data;
-            this.mensajeExito = `✅ Se encontraron ${this.listaRegistros.length} registros.`;
+            // Manejamos la respuesta según si Django envía Paginación o Array directo
+            if (data && data.results) {
+              this.listaRegistros = data.results;
+            } else if (Array.isArray(data)) {
+              this.listaRegistros = data;
+            } else {
+              this.listaRegistros = [data]; // Por si acaso devuelve un solo objeto
+            }
+
+            if (this.listaRegistros.length === 0) {
+              this.mensajeExito = '✅ La búsqueda se realizó, pero la tabla está vacía.';
+            } else {
+              this.mensajeExito = `✅ Se encontraron ${this.listaRegistros.length} registros.`;
+            }
           },
           error: (err: any) => this.procesarError(err)
         });

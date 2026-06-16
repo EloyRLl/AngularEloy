@@ -5,7 +5,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { ZonaServicioService } from '@app/services/zona-servicio.service';
+import { ActivatedRoute } from '@angular/router'; 
+import { ZonaServicioService } from '@app/services/zona-servicio.service'; 
 
 @Component({
   selector: 'app-zona-servicio-form',
@@ -19,26 +20,39 @@ export class ZonaServicioFormComponent implements OnInit {
   listaRegistros: any[] = []; 
   registroSeleccionado: any = null;
 
-  // Variables para los mensajes en pantalla
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  constructor(private fb: FormBuilder, private service: ZonaServicioService) {}
+  constructor(
+    private fb: FormBuilder, 
+    private service: ZonaServicioService,
+    private route: ActivatedRoute 
+  ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      operacion: ['insert'], 
+      operacion: ['insert'],
       id: [''],
-      nombre: ['Mi primera zona'], 
-      geom: ['POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'],
+      geom: [''], 
+      nombre: ['Zona Centro'],
       poblacion_afectada: [5000],
-      fecha_creacion: ['2023-10-25'], 
-      responsable: ['Juan Pérez'],
-      activa: [true] 
+      fecha_creacion: ['2023-01-01'],
+      responsable: ['Ayuntamiento'],
+      activa: [true]
+    });
+
+    // Leer URL para rellenar coordenadas
+    this.route.queryParams.subscribe(params => {
+      if (params['geom']) {
+        this.form.patchValue({
+          geom: params['geom'],
+          operacion: 'insert'
+        });
+        this.mensajeExito = '📍 Coordenadas de la Zona capturadas del mapa.';
+      }
     });
   }
 
-  // Función para extraer el error exacto de Django
   procesarError(err: any) {
     console.error('❌ Error completo:', err);
     if (err.error && typeof err.error === 'object') {
@@ -63,7 +77,8 @@ export class ZonaServicioFormComponent implements OnInit {
     this.service.getById(id).subscribe({
       next: (data: any) => {
         this.form.patchValue(data);
-        this.mensajeExito = '✅ Datos cargados correctamente.';
+        this.form.patchValue({ operacion: 'update' });
+        this.mensajeExito = '✅ Datos cargados correctamente listos para editar.';
       },
       error: (err: any) => this.procesarError(err)
     });
@@ -81,7 +96,7 @@ export class ZonaServicioFormComponent implements OnInit {
       case 'insert':
         this.service.create(payload).subscribe({
           next: (res: any) => this.mensajeExito = '✅ Zona de Servicio creada con éxito.',
-          error: (err: any) => this.procesarError(err)
+          error: (err: any) => this.procesarError(err) 
         });
         break;
       case 'update':
@@ -109,7 +124,7 @@ export class ZonaServicioFormComponent implements OnInit {
         this.service.getAll().subscribe({
           next: (data: any) => {
             this.listaRegistros = data.results ? data.results : data;
-            this.mensajeExito = `✅ Se encontraron ${this.listaRegistros.length} zonas de servicio.`;
+            this.mensajeExito = `✅ Se encontraron ${this.listaRegistros.length} registros.`;
           },
           error: (err: any) => this.procesarError(err)
         });
