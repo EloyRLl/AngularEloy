@@ -6,11 +6,15 @@ import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, ElementRef} fro
 import { MapService } from '../../services/map.service';
 import { DrawBuildingComponent } from '../draw-building/draw-building.component';
 import { DrawFlowerComponent } from '../draw-flower/draw-flower.component';
+import { DrawZonaServicioComponent } from '../draw-zona-servicio/draw-zona-servicio.component';
+import { DrawTuberiaComponent } from '../draw-tuberia/draw-tuberia.component';
+import { DrawArquetaPozoComponent } from '../draw-arqueta-pozo/draw-arqueta-pozo.component';
+
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [DrawBuildingComponent, DrawFlowerComponent],
+  imports: [DrawZonaServicioComponent, DrawTuberiaComponent, DrawArquetaPozoComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
@@ -40,7 +44,15 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy{
     console.log('mapComponent initialized');
     this.mapService.map.setTarget(this.mapContainer.nativeElement);
     console.log('Mapa reasociado al nuevo DOM');
+    
+    setTimeout(() => {
+      if (this.mapService.map) {
+        this.mapService.map.updateSize();
+        console.log('Tamaño del mapa recalculado con éxito');
+      }
+    }, 100);
   }
+  
 
   ngOnDestroy(): void {
     if (this.mapService.map) {

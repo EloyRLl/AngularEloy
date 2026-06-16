@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { ZonaServicioService } from '@app/services/zona-servicio.service';
+import { ActivatedRoute } from '@angular/router'; // <-- NUEVO: Importar ActivatedRoute
 
 @Component({
   selector: 'app-zona-servicio-form',
@@ -23,9 +24,15 @@ export class ZonaServicioFormComponent implements OnInit {
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  constructor(private fb: FormBuilder, private service: ZonaServicioService) {}
+  // <-- NUEVO: Inyectar private route: ActivatedRoute en el constructor
+  constructor(
+    private fb: FormBuilder, 
+    private service: ZonaServicioService,
+    private route: ActivatedRoute 
+  ) {}
 
   ngOnInit(): void {
+    // 1. Inicializamos el formulario primero
     this.form = this.fb.group({
       operacion: ['insert'], 
       id: [''],
@@ -36,10 +43,21 @@ export class ZonaServicioFormComponent implements OnInit {
       responsable: ['Juan Pérez'],
       activa: [true] 
     });
+
+    // <-- NUEVO: 2. Nos suscribimos a los parámetros de la URL
+    this.route.queryParams.subscribe(params => {
+      if (params['geom']) {
+        // Si la URL tiene el parámetro 'geom', actualizamos el valor en el formulario
+        this.form.patchValue({
+          geom: params['geom'],
+          operacion: 'insert' // Lo ponemos en insert por defecto ya que estamos dibujando algo nuevo
+        });
+      }
+    });
   }
 
   // Función para extraer el error exacto de Django
-procesarError(err: any) {
+  procesarError(err: any) {
     console.error('❌ Error completo:', err);
     
     if (err.error) {

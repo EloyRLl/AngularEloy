@@ -1,17 +1,31 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ZonaServicioService {
-  // Ajusta esta URL a la que corresponda en tu API de Django
   private apiUrl = 'http://localhost:8888/api/zonas_servicio'; 
 
   constructor(private http: HttpClient) {}
 
-  create(data: any) { return this.http.post(`${this.apiUrl}/`, data); }
-  update(id: number, data: any) { return this.http.put(`${this.apiUrl}/${id}/`, data); }
-  delete(id: number) { return this.http.delete(`${this.apiUrl}/${id}/`); }
-  getById(id: number) { return this.http.get(`${this.apiUrl}/${id}/`); }
-  getAll(): Observable<any> { return this.http.get(this.apiUrl + '/'); }
+  private getOptions() {
+    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    
+    // Si llegara a existir un token real, lo enviamos, ignorando los "undefined"
+    const token = localStorage.getItem('token');
+    if (token && token !== 'undefined' && token !== 'null') {
+      headers = headers.set('Authorization', `Token ${token}`);
+    }
+
+    return { 
+      headers: headers,
+      withCredentials: true // Esto envía tu Cookie de sesión de Django ("User admin logged in")
+    };
+  }
+
+  create(data: any): Observable<any> { return this.http.post(`${this.apiUrl}/`, data, this.getOptions()); }
+  update(id: number, data: any): Observable<any> { return this.http.put(`${this.apiUrl}/${id}/`, data, this.getOptions()); }
+  delete(id: number): Observable<any> { return this.http.delete(`${this.apiUrl}/${id}/`, this.getOptions()); }
+  getById(id: number): Observable<any> { return this.http.get(`${this.apiUrl}/${id}/`, this.getOptions()); }
+  getAll(): Observable<any> { return this.http.get(`${this.apiUrl}/`, this.getOptions()); }
 }

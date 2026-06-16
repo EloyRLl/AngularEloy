@@ -1,7 +1,15 @@
-<div class="flexbox-exterior-container">
-<div class="flexbox-responsive-interior-container-column-1000px">
-    <h6>Web Develop and Geoportals. Master in Geomatics and Geoinformation</h6>
+<div class="flexbox-exterior-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+  <div class="flexbox-responsive-interior-container-column-1000px">
+      <h6>Web Develop and Geoportals. Master in Geomatics and Geoinformation</h6>
+  </div>
+  
+  <div class="user-auth-section">
+      <ng-container *ngIf="authService.isAuthenticated; else loggedOut">
+          <span style="margin-right: 15px;">Welcome, <strong>{{ authService.username }}</strong></span>
+          <a routerLink="/logout-form" class="auth-link">Logout</a>
+      </ng-container>
+      <ng-template #loggedOut>
+          <a routerLink="/login-form" class="auth-link">Login</a>
+      </ng-template>
+  </div>
 </div>
-
-</div>
-

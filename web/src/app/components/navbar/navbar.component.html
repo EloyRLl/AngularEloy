@@ -1,0 +1,24 @@
+<nav class="mi-navbar">
+  
+  <div class="nav-links">
+    <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{exact: true}">🗺️ Mapa Principal</a>
+    <a routerLink="/tuberias" routerLinkActive="activo">Tuberías</a>
+    <a routerLink="/zonas" routerLinkActive="activo">Zonas de Servicio</a>
+    <a routerLink="/arquetas" routerLinkActive="activo">Arquetas y Pozos</a>
+  </div>
+
+  <div class="nav-auth">
+    
+    <ng-container *ngIf="!username">
+      <a routerLink="/login" class="btn-login">Iniciar Sesión</a>
+    </ng-container>
+
+    <ng-container *ngIf="username">
+      <span class="bienvenida">👤 Hola, <strong>{{ username }}</strong></span>
+      <button (click)="hacerLogout()" class="btn-logout">
+        Cerrar Sesión
+      </button>
+    </ng-container>
+
+  </div>
+</nav>

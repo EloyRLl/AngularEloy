@@ -1,0 +1,69 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MapService } from '../../services/map.service';
+import { Router } from '@angular/router';
+import Draw from 'ol/interaction/Draw';
+import WKT from 'ol/format/WKT';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+
+@Component({
+  selector: 'app-draw-arqueta-pozo',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <button (click)="toggleDraw()" [ngClass]="{'active': isDrawing}" style="margin-bottom: 5px; cursor: pointer;">
+      {{ isDrawing ? '🛑 Parar Arqueta/Pozo' : '📍 Dibujar Arqueta/Pozo' }}
+    </button>
+  `,
+  styles: [`
+    .active { background-color: lightcoral; font-weight: bold; color: white; }
+    button { padding: 5px 10px; border-radius: 4px; border: 1px solid #ccc; }
+  `]
+})
+export class DrawArquetaPozoComponent implements OnInit, OnDestroy {
+  drawInteraction!: Draw;
+  isDrawing: boolean = false;
+
+  constructor(private mapService: MapService, private router: Router) {}
+
+  ngOnInit() {
+    // Buscamos la capa vectorial por el nombre exacto
+    const layer = this.mapService.getLayerByTitle('Arquetas Pozos vector') as VectorLayer<VectorSource>;
+    if (!layer) {
+      console.error('No se encontró la capa Arquetas Pozos vector');
+      return;
+    }
+
+    this.drawInteraction = new Draw({
+      source: layer.getSource()!,
+      type: 'Point' // Las arquetas son puntos
+    });
+
+    this.drawInteraction.on('drawend', (event) => {
+      const format = new WKT();
+      const geomWkt = format.writeGeometry(event.feature.getGeometry()!);
+      
+      this.toggleDraw(); // Apagar la interacción
+      
+      // Enviar la geometría al formulario correspondiente
+      this.router.navigate(['/arquetas-pozos'], { queryParams: { geom: geomWkt } });
+    });
+  }
+
+  toggleDraw() {
+    this.isDrawing = !this.isDrawing;
+    if (this.isDrawing) {
+      this.mapService.disableMapInteractions(); 
+      this.mapService.map.addInteraction(this.drawInteraction);
+    } else {
+      this.mapService.map.removeInteraction(this.drawInteraction);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.drawInteraction) {
+      this.mapService.map.removeInteraction(this.drawInteraction);
+    }
+  }
+}

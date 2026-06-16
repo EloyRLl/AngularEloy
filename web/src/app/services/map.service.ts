@@ -42,7 +42,7 @@ export class MapService {
   createBaseLayers(): LayerGroup {
     var pnoa = new TileLayer({
       properties: {
-            title: 'Cadastre WMS'
+            title: 'Ortofoto PNOA (IGN)'
           },
       source: new TileWMS(({
         url: "https://www.ign.es/wms-inspire/pnoa-ma?",
@@ -73,35 +73,87 @@ export class MapService {
   }
 
   createMyLayers(): LayerGroup {
-    var buildings= new TileLayer({
-        properties: {
-          title: 'Buildings WMS'
-        },
-        source: new TileWMS({
-          url: this.settingsService.GEOSERVER_URL + 'wms?',
-          params: {
-            'LAYERS': 'buildings_buildings', 'VERSION': '1.3.0', 'TILED': true, 'TRANSPARENT': true, 'FORMAT': 'image/png'
-          }
-        })
-      });
-    var buildingsVectorSource = new VectorSource({wrapX: false}); 
-    var buildingsVectorLayer = new VectorLayer({
-      source: buildingsVectorSource,
-      properties: {
-        title: 'Buildings vector' // <--- Define el título aquí
-        // Puedes añadir otras propiedades personalizadas aquí si es necesario
-        // Por ejemplo: isBaseLayer: false, description: 'Capa para edificios'
-      }   
-    });//The layer were we will draw
+  // ---------------------------------------------------------
+    // 1. ZONAS DE SERVICIO 
+    // ---------------------------------------------------------
+    const zonasWMS = new TileLayer({
+      properties: { title: 'Zonas Servicio WMS' },
+      source: new TileWMS({
+        url: this.settingsService.GEOSERVER_URL + 'wms?',
+        params: {
+          // OJO: Asumo que en GeoServer el workspace es 'servicios' y la capa 'zonas_servicio'
+          'LAYERS': 'servicios:zonas_servicio', 
+          'VERSION': '1.3.0', 'TILED': true, 'TRANSPARENT': true, 'FORMAT': 'image/png'
+        }
+      })
+    });
+    
+    const zonasVectorSource = new VectorSource({wrapX: false}); 
+    const zonasVectorLayer = new VectorLayer({
+      source: zonasVectorSource,
+      properties: { title: 'Zonas Servicio vector' } // <--- Este nombre es clave para dibujar luego
+    });
 
-    var myLayersGroup = new LayerGroup({
+    // ---------------------------------------------------------
+    // 2. TUBERÍAS
+    // ---------------------------------------------------------
+    const tuberiasWMS = new TileLayer({
+      properties: { title: 'Tuberías WMS' },
+      source: new TileWMS({
+        url: this.settingsService.GEOSERVER_URL + 'wms?',
+        params: {
+          // OJO: Asumo que en GeoServer el workspace es 'servicios' y la capa 'tuberias'
+          'LAYERS': 'servicios:tuberias', 
+          'VERSION': '1.3.0', 'TILED': true, 'TRANSPARENT': true, 'FORMAT': 'image/png'
+        }
+      })
+    });
+    
+    const tuberiasVectorSource = new VectorSource({wrapX: false}); 
+    const tuberiasVectorLayer = new VectorLayer({
+      source: tuberiasVectorSource,
+      properties: { title: 'Tuberías vector' } // <--- Este nombre es clave para dibujar luego
+    });
+
+    // ---------------------------------------------------------
+    // 3. ARQUETAS Y POZOS
+    // ---------------------------------------------------------
+    const arquetasWMS = new TileLayer({
+      properties: { title: 'Arquetas Pozos WMS' },
+      source: new TileWMS({
+        url: this.settingsService.GEOSERVER_URL + 'wms?',
+        params: {
+          // OJO: Asumo que en GeoServer el workspace es 'servicios' y la capa 'arquetas_pozos'
+          'LAYERS': 'servicios:arquetas_pozos', 
+          'VERSION': '1.3.0', 'TILED': true, 'TRANSPARENT': true, 'FORMAT': 'image/png'
+        }
+      })
+    });
+    
+    const arquetasVectorSource = new VectorSource({wrapX: false}); 
+    const arquetasVectorLayer = new VectorLayer({
+      source: arquetasVectorSource,
+      properties: { title: 'Arquetas Pozos vector' } // <--- Este nombre es clave para dibujar luego
+    });
+
+    // ---------------------------------------------------------
+    // AGRUPAR TODO Y DEVOLVER
+    // ---------------------------------------------------------
+    const myLayersGroup = new LayerGroup({
         properties: {
-          title: 'My layers'
+          title: 'Mis Capas (Servicios)'
         },
-        layers: [buildings, buildingsVectorLayer]
+        layers: [
+          zonasWMS, zonasVectorLayer,
+          tuberiasWMS, tuberiasVectorLayer, 
+          arquetasWMS, arquetasVectorLayer,
+        ]
       });
+
     return myLayersGroup;
   }
+
+
 
 
   createMap(): Map { 
@@ -215,3 +267,4 @@ export class MapService {
     }
   }
 }
+

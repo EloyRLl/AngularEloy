@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { ArquetaPozoService } from '@app/services/arqueta-pozo.service';
+import { ActivatedRoute } from '@angular/router'; // <-- IMPORTADO AQUÍ
 
 @Component({
   selector: 'app-arqueta-pozo-form',
@@ -23,9 +24,15 @@ export class ArquetaPozoFormComponent implements OnInit {
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  constructor(private fb: FormBuilder, private service: ArquetaPozoService) {}
+  // <-- Inyectado 'route' en el constructor
+  constructor(
+    private fb: FormBuilder, 
+    private service: ArquetaPozoService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    // 1. Inicializar formulario
     this.form = this.fb.group({
       operacion: ['insert'],
       id: [''],
@@ -36,10 +43,20 @@ export class ArquetaPozoFormComponent implements OnInit {
       accesible: [true],
       estado_conservacion: ['Excelente']
     });
+
+    // 2. Suscribirse a los parámetros de la URL <-- NUEVO
+    this.route.queryParams.subscribe(params => {
+      if (params['geom']) {
+        this.form.patchValue({
+          geom: params['geom'],
+          operacion: 'insert' // Forzamos 'insert' cuando venimos del mapa
+        });
+      }
+    });
   }
 
   // Función para extraer el error exacto de Django
-procesarError(err: any) {
+  procesarError(err: any) {
     console.error('❌ Error completo:', err);
     
     if (err.error) {
@@ -60,7 +77,7 @@ procesarError(err: any) {
         
         extraerTextos(err.error);
         
-        // Si logró sacar textos los une, si no, lo pasa a texto bruto para no ver [object Object]
+        // Si logró sacar textos los une, si no, lo pasa a texto bruto
         this.mensajeError = mensajes.length > 0 
           ? mensajes.join(' | ') 
           : JSON.stringify(err.error);

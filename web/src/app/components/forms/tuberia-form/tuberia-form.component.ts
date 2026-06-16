@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { TuberiaService } from '@app/services/tuberia.service'; 
+import { ActivatedRoute } from '@angular/router'; // <-- IMPORTADO AQUÍ
 
 @Component({
   selector: 'app-tuberia-form',
@@ -19,13 +20,19 @@ export class TuberiaFormComponent implements OnInit {
   listaRegistros: any[] = []; 
   registroSeleccionado: any = null;
 
-  // ✨ NUEVAS VARIABLES PARA LOS MENSAJES EN PANTALLA
+  // Variables para los mensajes en pantalla
   mensajeError: string = '';
   mensajeExito: string = '';
 
-  constructor(private fb: FormBuilder, private service: TuberiaService) {}
+  // <-- Inyectado 'route' en el constructor
+  constructor(
+    private fb: FormBuilder, 
+    private service: TuberiaService,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
+    // 1. Inicializar formulario
     this.form = this.fb.group({
       operacion: ['insert'],
       id: [''],
@@ -36,9 +43,19 @@ export class TuberiaFormComponent implements OnInit {
       fecha_instalacion: ['2023-01-15'],
       estado: ['Bueno']
     });
+
+    // 2. Suscribirse a los parámetros de la URL <-- NUEVO
+    this.route.queryParams.subscribe(params => {
+      if (params['geom']) {
+        this.form.patchValue({
+          geom: params['geom'],
+          operacion: 'insert' // Forzamos 'insert' cuando venimos del mapa
+        });
+      }
+    });
   }
 
-  // ✨ NUEVA FUNCIÓN: Extrae el error exacto que envía Django
+  // Función para extraer el error exacto que envía Django
   procesarError(err: any) {
     console.error('❌ Error completo:', err);
     
@@ -60,7 +77,7 @@ export class TuberiaFormComponent implements OnInit {
         
         extraerTextos(err.error);
         
-        // Si logró sacar textos los une, si no, lo pasa a texto bruto para no ver [object Object]
+        // Si logró sacar textos los une, si no, lo pasa a texto bruto
         this.mensajeError = mensajes.length > 0 
           ? mensajes.join(' | ') 
           : JSON.stringify(err.error);
@@ -101,7 +118,7 @@ export class TuberiaFormComponent implements OnInit {
       case 'insert':
         this.service.create(payload).subscribe({
           next: (res: any) => this.mensajeExito = '✅ Tubería creada con éxito.',
-          error: (err: any) => this.procesarError(err) // Usamos la nueva función
+          error: (err: any) => this.procesarError(err)
         });
         break;
       case 'update':

@@ -1,8 +1,7 @@
-<div #mapContainer id="map">
-    <app-draw-building id="draw-building" ></app-draw-building>
-    <app-draw-flower id="draw-flower" ></app-draw-flower>
+<div #mapContainer id="map" style="position: relative;">
+    <div style="position: absolute; top: 10px; left: 10px; z-index: 1000; display: flex; flex-direction: column;">
+        <app-draw-zona-servicio></app-draw-zona-servicio>
+        <app-draw-tuberia></app-draw-tuberia>
+        <app-draw-arqueta-pozo></app-draw-arqueta-pozo>
+    </div>
 </div>
-
-
-
-
